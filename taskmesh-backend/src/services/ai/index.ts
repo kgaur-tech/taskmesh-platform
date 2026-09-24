@@ -1,18 +1,18 @@
 import OpenAI from "openai";
 
-const apiKey =
-  process.env.OPENAI_API_KEY ??
-  process.env.AI_API_KEY;
+function openAIClient() {
+  const apiKey =
+    process.env.OPENAI_API_KEY ??
+    process.env.AI_API_KEY;
 
-if (!apiKey) {
-  throw new Error(
-    "OPENAI_API_KEY is not configured",
-  );
+  if (!apiKey) {
+    throw new Error(
+      "OPENAI_API_KEY is not configured",
+    );
+  }
+
+  return new OpenAI({ apiKey });
 }
-
-const openai = new OpenAI({
-  apiKey,
-});
 
 export type EvaluationInput = {
   initiative: {
@@ -289,6 +289,7 @@ export async function evaluateSubmission(
       );
 
   try {
+    const openai = openAIClient();
     const response =
       await openai.responses.create({
         model: "gpt-5.6-luna",
