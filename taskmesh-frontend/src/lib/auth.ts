@@ -1,13 +1,20 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function requireUser() {
-  const { userId } = await auth();
-  if (!userId) return { response: NextResponse.json({ error: "Authentication required" }, { status: 401 }) } as const;
+  const session = await auth();
+  const userId = session?.user?.id;
 
-  const user = await prisma.user.findUnique({ where: { clerkId: userId } });
-  if (!user) return { response: NextResponse.json({ error: "User profile is not synchronized" }, { status: 403 }) } as const;
+  if (!userId) {
+    return { response: NextResponse.json({ error: "Authentication required" }, { status: 401 }) } as const;
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    return { response: NextResponse.json({ error: "User profile is not synchronized" }, { status: 403 }) } as const;
+  }
+
   return { user } as const;
 }
 

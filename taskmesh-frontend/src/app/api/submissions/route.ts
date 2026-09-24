@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { apiError } from "@/lib/http";
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
     const task = await prisma.task.findFirst({ where: { id: data.taskId, status: "PUBLISHED", initiative: { memberships: { some: { userId: result.user.id, status: "ACTIVE" } } } }, select: { id: true } });
     if (!task) return NextResponse.json({ error: "Task is unavailable or you are not a member" }, { status: 403 });
     const latest = await prisma.submission.findFirst({ where: { taskId: data.taskId, userId: result.user.id }, orderBy: { version: "desc" }, select: { version: true } });
-    const submission = await prisma.$transaction(async (tx) => {
+    const submission = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const created = await tx.submission.create({ data: { taskId: data.taskId, userId: result.user.id, version: (latest?.version ?? 0) + 1, content: data.content, url: data.url, status: "SUBMITTED", submittedAt: new Date(), media: { create: data.media } }, include: { media: true } });
       await tx.auditEvent.create({ data: { actorId: result.user.id, action: "SUBMISSION_CREATED", entityType: "Submission", entityId: created.id } });
       return created;

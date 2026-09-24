@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { apiError } from "@/lib/http";
@@ -15,7 +16,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     if (existing?.status === "ACTIVE") return NextResponse.json({ membership: existing });
     const count = await prisma.initiativeMembership.count({ where: { initiativeId: id, status: "ACTIVE" } });
     if (initiative.participantLimit && count >= initiative.participantLimit) return NextResponse.json({ error: "Initiative is full" }, { status: 409 });
-    const membership = await prisma.$transaction(async (tx) => {
+    const membership = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const joined = await tx.initiativeMembership.upsert({
         where: { userId_initiativeId: { userId: result.user.id, initiativeId: id } },
         create: { userId: result.user.id, initiativeId: id },

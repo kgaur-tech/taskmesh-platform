@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { apiError } from "@/lib/http";
@@ -16,7 +17,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     if (existingEvaluation?.status === "COMPLETED") return NextResponse.json({ evaluation: existingEvaluation });
     const rubric = await prisma.rubric.findUnique({ where: { initiativeId: submission.task.initiativeId }, include: { criteria: { where: { enabled: true } } } });
     if (!rubric || rubric.criteria.length === 0) return NextResponse.json({ error: "This initiative has no enabled evaluation rubric" }, { status: 422 });
-    const criterionById = new Map(rubric.criteria.map((criterion) => [criterion.id, criterion]));
+    const criterionById = new Map<string, (typeof rubric.criteria)[number]>(rubric.criteria.map((criterion) => [criterion.id, criterion]));
     const evaluation = await prisma.evaluation.upsert({
       where: { evaluationKey: id },
       create: { evaluationKey: id, submissionId: id, rubricId: rubric.id, status: "PROCESSING" },
@@ -28,7 +29,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       if (parsed.criterionScores.some((item) => !criterionById.has(item.criterionId) || item.score > (criterionById.get(item.criterionId)?.maxScore ?? 0))) {
         throw new Error("Provider returned an invalid rubric criterion score");
       }
-      const completed = await prisma.$transaction(async (tx) => {
+      const completed = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const updated = await tx.evaluation.update({ where: { id: evaluation.id }, data: { status: "COMPLETED", overallScore: parsed.overallScore, summary: parsed.summary, strengths: parsed.strengths, weaknesses: parsed.weaknesses, recommendations: parsed.recommendations, confidence: parsed.confidence, completedAt: new Date(), criterionScores: { deleteMany: {}, create: parsed.criterionScores } }, include: { criterionScores: true } });
         await tx.submission.update({ where: { id }, data: { status: "EVALUATED" } });
         await tx.notification.create({ data: { userId: submission.userId, type: "EVALUATION_COMPLETED", title: "Evaluation completed", body: "Your submission has a structured evaluation ready to review.", metadata: { submissionId: id } } });

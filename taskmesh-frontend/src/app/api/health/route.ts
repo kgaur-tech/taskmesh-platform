@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export function GET() {
   const checks = {
     database: Boolean(process.env.DATABASE_URL),
-    clerk: Boolean(process.env.CLERK_SECRET_KEY && process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY),
+    googleAuth: Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET),
     cloudinary: Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET),
     evaluation: Boolean(process.env.AI_PROVIDER && process.env.AI_PROVIDER_KEY)
   };

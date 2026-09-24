@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { signOut, useSession } from "next-auth/react";
 import { ArrowRight, Bell, BookOpen, CalendarDays, ChevronRight, LayoutGrid, Menu, ShieldCheck, Sparkles, Target, Users, X } from "lucide-react";
 import { Avatar, Badge, Button, NavLink } from "@/components/ui";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -42,6 +42,7 @@ export function TopBrand() {
 
 export function MarketingShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const links = [
     { href: "/", label: "Home" },
@@ -50,6 +51,7 @@ export function MarketingShell({ children }: { children: ReactNode }) {
     { href: "/more", label: "More" },
     { href: "/about", label: "About us" }
   ];
+  const isSignedIn = status === "authenticated" && !!session?.user;
 
   return (
     <div className="marketing-shell flex min-h-screen flex-col bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
@@ -61,14 +63,29 @@ export function MarketingShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <SignedOut><Button className="hidden sm:inline-flex" variant="ghost" asChild><Link href="/sign-in">Sign in</Link></Button><Button className="hidden md:inline-flex" asChild><Link href="/sign-in">Get started <ArrowRight className="h-4 w-4" /></Link></Button></SignedOut>
-            <SignedIn><Button className="hidden sm:inline-flex" variant="ghost" asChild><Link href="/app/dashboard">Open workspace</Link></Button><UserButton /></SignedIn>
+            {!isSignedIn ? (
+              <>
+                <Button className="hidden sm:inline-flex" variant="ghost" asChild><Link href="/sign-in">Sign in</Link></Button>
+                <Button className="hidden md:inline-flex" asChild><Link href="/sign-in">Get started <ArrowRight className="h-4 w-4" /></Link></Button>
+              </>
+            ) : (
+              <>
+                <Button className="hidden sm:inline-flex" variant="ghost" asChild><Link href="/app/dashboard">Open workspace</Link></Button>
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  Sign out
+                </button>
+              </>
+            )}
             <button className="mobile-menu-button md:hidden" type="button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen} aria-controls="mobile-public-navigation" aria-label="Toggle navigation">
               {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
-        {menuOpen ? <nav id="mobile-public-navigation" className="mobile-public-nav md:hidden" aria-label="Mobile primary navigation">{links.map((link) => <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} aria-current={pathname === link.href ? "page" : undefined}>{link.label}</Link>)}<SignedOut><Link href="/sign-in" onClick={() => setMenuOpen(false)}>Sign in <ArrowRight className="h-4 w-4" /></Link></SignedOut><SignedIn><Link href="/app/dashboard" onClick={() => setMenuOpen(false)}>Open workspace <ArrowRight className="h-4 w-4" /></Link></SignedIn></nav> : null}
+        {menuOpen ? <nav id="mobile-public-navigation" className="mobile-public-nav md:hidden" aria-label="Mobile primary navigation">{links.map((link) => <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} aria-current={pathname === link.href ? "page" : undefined}>{link.label}</Link>)}{!isSignedIn ? <Link href="/sign-in" onClick={() => setMenuOpen(false)}>Sign in <ArrowRight className="h-4 w-4" /></Link> : <Link href="/app/dashboard" onClick={() => setMenuOpen(false)}>Open workspace <ArrowRight className="h-4 w-4" /></Link>}</nav> : null}
       </header>
       <div className="flex-1">{children}</div>
       <footer className="marketing-footer border-t"><div className="page-container flex flex-col gap-2 py-6 text-sm sm:flex-row sm:items-center sm:justify-between"><span>© {new Date().getFullYear()} TaskMesh</span><span>Structured practice for steady growth.</span></div></footer>

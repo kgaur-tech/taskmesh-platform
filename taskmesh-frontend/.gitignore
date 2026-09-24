@@ -10,5 +10,4 @@ build/
 .DS_Store
 Thumbs.db
 
-# clerk configuration (can include secrets)
-/.clerk/
+# NextAuth and local secrets

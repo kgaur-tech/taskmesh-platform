@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { SignIn as ClerkSignIn, SignUp as ClerkSignUp } from "@clerk/nextjs";
+import { signIn } from "next-auth/react";
 import { ArrowRight, CheckCircle2, Code2, Mic2, Sparkles } from "lucide-react";
 import { Button, Card, EmptyState, SectionHeader } from "@/components/ui";
 
@@ -17,8 +17,24 @@ export function LandingPage() {
   </main>;
 }
 
-export function SignInView() { return <div className="auth-page"><ClerkSignIn routing="path" path="/sign-in" signUpUrl="/sign-up" /></div>; }
-export function SignUpView() { return <div className="auth-page"><ClerkSignUp routing="path" path="/sign-up" signInUrl="/sign-in" /></div>; }
+export function SignInView() {
+  return (
+    <div className="auth-page">
+      <div className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Welcome back</p>
+        <h1 className="mt-3 text-3xl font-semibold text-slate-950">Continue with Google</h1>
+        <p className="mt-3 text-sm text-slate-600">Sign in to access your initiatives, tasks, and progress tracking.</p>
+        <Button className="mt-6 w-full justify-center" onClick={() => signIn("google", { callbackUrl: "/app/dashboard" })}>
+          Continue with Google
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function SignUpView() {
+  return <SignInView />;
+}
 
 const participantCopy: Record<string, [string, string]> = {
   dashboard: ["Your practice space", "Choose an initiative to begin a focused practice session."], initiatives: ["Initiatives", "English and DSA are ready to explore. More tracks are on the roadmap."], tasks: ["Tasks", "Today’s published work will appear here."], submissions: ["Submissions", "Your submitted work will appear here when available."], evaluation: ["Evaluation", "Submit work to receive evaluation when your workspace is connected."], progress: ["Progress", "Your consistency and growth signals will appear here."], leaderboard: ["Leaderboard", "Rankings appear after participants complete published work."], groups: ["Groups", "Join a private group to add a cohort view."], notifications: ["Notifications", "Updates and evaluation notices will appear here."], profile: ["Profile", "Your account profile will appear here."], settings: ["Settings", "Workspace preferences will appear here."]

@@ -89,8 +89,8 @@ enum NotificationType {
 
 model User {
   id               String                 @id @default(cuid())
-  clerkId          String                 @unique
-  email            String?
+  googleId         String?                @unique
+  email            String                 @unique
   name             String?
   username         String?                @unique
   avatarUrl        String?

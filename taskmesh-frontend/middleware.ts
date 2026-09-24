@@ -1,12 +1,10 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import NextAuth from "next-auth";
+import authConfig from "@/auth.config";
 
-const isProtectedRoute = createRouteMatcher(["/app(.*)", "/leader(.*)", "/api(.*)"]);
+const { auth } = NextAuth(authConfig);
 
-export default clerkMiddleware(async (auth, request) => {
-  if (request.nextUrl.pathname === "/api/health") return;
-  if (isProtectedRoute(request)) await auth.protect();
-});
+export default auth;
 
 export const config = {
-  matcher: ["/((?!_next|.*\\..*).*)", "/api/(.*)"]
+  matcher: ["/app/:path*", "/leader/:path*"],
 };

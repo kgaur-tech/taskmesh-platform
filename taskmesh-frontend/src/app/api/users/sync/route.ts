@@ -1,29 +1,33 @@
 import { NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { apiError } from "@/lib/http";
 import { userSyncSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
-    const clerkUser = await currentUser();
-    if (!clerkUser || clerkUser.id !== userId) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    const session = await auth();
+    const userEmail = session?.user?.email;
+    if (!userEmail) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
 
     const data = userSyncSchema.parse(await request.json());
     const profile = {
-      email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
-      name: clerkUser.fullName ?? null,
-      username: clerkUser.username ?? null,
-      avatarUrl: clerkUser.imageUrl ?? null,
-      timezone: data.timezone
+      email: userEmail,
+      name: session.user?.name ?? userEmail,
+      avatarUrl: session.user?.image ?? null,
+      timezone: data.timezone,
+      googleId: session.user?.googleId ?? null,
     };
+
     const user = await prisma.user.upsert({
-      where: { clerkId: userId },
-      create: { clerkId: userId, ...profile },
-      update: profile
+      where: { email: userEmail },
+      create: {
+        ...profile,
+        role: "PARTICIPANT",
+      },
+      update: profile,
     });
+
     return NextResponse.json({ user });
   } catch (error) {
     return apiError(error);

@@ -7,10 +7,10 @@ TaskMesh is an initiative platform for recurring practice, structured submission
 - `src/app`: App Router pages and route handlers
 - `src/features/workspaces`: existing participant and leader workspace UI
 - `src/components`: shared shell, UI, and chart primitives
-- `src/lib`: Prisma singleton, Clerk authorization boundary, Zod schemas, HTTP errors, and evaluation provider contract
+- `src/lib`: Prisma singleton, Google session auth boundary, Zod schemas, HTTP errors, and evaluation provider contract
 - `prisma/schema.prisma`: normalized PostgreSQL domain model
 
-Route handlers are intentionally thin. They authenticate with Clerk, validate request bodies with Zod, authorize resource ownership or membership, and perform transactional writes through Prisma.
+Route handlers are intentionally thin. They authenticate with NextAuth sessions, validate request bodies with Zod, authorize resource ownership or membership, and perform transactional writes through Prisma.
 
 ## Local setup
 
@@ -24,7 +24,7 @@ Useful checks are `npm run typecheck`, `npm run lint`, and `npm run build`.
 
 ## Required integrations
 
-Clerk supplies authentication and identity. The `/api/users/sync` endpoint maps a Clerk subject to the internal `User` record; call it after onboarding before accessing workspace APIs.
+Google OAuth via NextAuth supplies authentication and identity. The `/api/users/sync` endpoint maps the Google session to the internal `User` record; call it after onboarding before accessing workspace APIs.
 
 Cloudinary uploads use `/api/uploads/sign`. The browser receives only a short-lived signature payload; the API secret stays server-side. Store returned media metadata through the submission endpoint.
 
@@ -45,4 +45,4 @@ AI evaluation is represented by `EvaluationProvider` in `src/lib/evaluation.ts`.
 
 ## Production notes
 
-No production-facing route should fall back to the seeded UI objects in `src/mock`. The current polished UI still contains local presentation fixtures while the server contracts are introduced; replacing those fixtures is the next integration step once a database and authenticated Clerk session are available. Do not run `prisma migrate deploy` until the production Supabase connection has been reviewed and the migration is committed.
+No production-facing route should fall back to the seeded UI objects in `src/mock`. The current polished UI still contains local presentation fixtures while the server contracts are introduced; replacing those fixtures is the next integration step once a database and authenticated Google session are available. Do not run `prisma migrate deploy` until the production Supabase connection has been reviewed and the migration is committed.
