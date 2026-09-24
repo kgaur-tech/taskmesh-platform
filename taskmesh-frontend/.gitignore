@@ -11,3 +11,4 @@ build/
 Thumbs.db
 
 # NextAuth and local secrets
+.vercel
